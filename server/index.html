@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Niveau Volume Micro</title>
+    <script src="https://code.jquery.com/jquery-3.5.0.slim.min.js" integrity="sha256-MlusDLJIP1GRgLrOflUQtshyP0TwT/RHXsI1wWGnQhs=" crossorigin="anonymous"></script>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+
+    <script type="text/javascript">
+      let sumVolumeLevel = 0;
+      let numberOfRecords = 0;
+      let socket = io.connect('http://localhost:8080');
+
+      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      .then(function(stream) {
+      audioContext = new AudioContext();
+      analyser = audioContext.createAnalyser();
+      microphone = audioContext.createMediaStreamSource(stream);
+      javascriptNode = audioContext.createScriptProcessor(2048, 1, 1); //audioCtx.createScriptProcessor(bufferSize, numberOfInputChannels, numberOfOutputChannels);
+
+      analyser.smoothingTimeConstant = 0.8;
+      analyser.fftSize = 1024;
+
+      microphone.connect(analyser);
+      analyser.connect(javascriptNode);
+      javascriptNode.connect(audioContext.destination);
+      javascriptNode.onaudioprocess = function() {
+          var array = new Uint8Array(analyser.frequencyBinCount);
+          analyser.getByteFrequencyData(array);
+          var values = 0;
+
+          var length = array.length;
+          for (var i = 0; i < length; i++) {
+            values += (array[i]);
+          }
+
+          var average = values / length;
+
+        let volumeLevel = Math.round(average);
+        console.log(volumeLevel);
+        numberOfRecords += 1;
+        sumVolumeLevel += volumeLevel;
+
+        // colorPids(average);
+      }
+      })
+      .catch(function(err) {
+        /* handle the error */
+      });
+
+      function sendVolumeLevel(){
+        //Pendant l'exécution de cette fonction, la page web continue d'enregistrer le microphone par conséquent on doit mettre à
+        //jour les valeurs.
+        let currentSumVolumeLevel = sumVolumeLevel;
+        let currentNumberOfRecords = numberOfRecords;
+
+        let meanVolumeLevel = Math.round(sumVolumeLevel/numberOfRecords);
+
+        sumVolumeLevel -= currentSumVolumeLevel;
+        numberOfRecords -= currentNumberOfRecords;
+        socket.emit('volumeLevel', { volumeLevel: meanVolumeLevel});
+      }
+
+      setInterval(sendVolumeLevel, 3000);
+    </script>
+
+    <h1>Enregistrement du microphone de l'ordinateur</h1>
+  </body>
+</html>
