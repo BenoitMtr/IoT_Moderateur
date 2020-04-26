@@ -1,4 +1,5 @@
-const app = require('express')();
+const express = require('express');
+const app = express();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
 
@@ -9,7 +10,7 @@ if (port == null || port == "") {
 }
 server.listen(port);
 console.log("Le serveur est actif à l'adresse suivante : 'http://localhost:" + port);
-
+app.use(express.static('public'))
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');

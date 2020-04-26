@@ -3,6 +3,8 @@
   <head>
     <meta charset="utf-8">
     <title>Niveau Volume Micro</title>
+    <!--<link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">-->
+    <link rel="stylesheet" type="text/css" href="/style.css">
     <script src="https://code.jquery.com/jquery-3.5.0.slim.min.js" integrity="sha256-MlusDLJIP1GRgLrOflUQtshyP0TwT/RHXsI1wWGnQhs=" crossorigin="anonymous"></script>
     <script src="/socket.io/socket.io.js"></script>
   </head>
@@ -61,11 +63,13 @@
         sumVolumeLevel -= currentSumVolumeLevel;
         numberOfRecords -= currentNumberOfRecords;
         socket.emit('volumeLevel', { volumeLevel: meanVolumeLevel});
+        document.getElementById("volumeLevel").innerHTML = meanVolumeLevel;
       }
 
       setInterval(sendVolumeLevel, 3000);
     </script>
 
     <h1>Enregistrement du microphone de l'ordinateur</h1>
+    <h2>Niveau enregistré: <span id="volumeLevel">0</span></h2>
   </body>
 </html>
