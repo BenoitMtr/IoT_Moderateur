@@ -5,6 +5,8 @@
     <title>Niveau Volume Micro</title>
     <!--<link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">-->
     <link rel="stylesheet" type="text/css" href="/style.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
     <script src="https://code.jquery.com/jquery-3.5.0.slim.min.js" integrity="sha256-MlusDLJIP1GRgLrOflUQtshyP0TwT/RHXsI1wWGnQhs=" crossorigin="anonymous"></script>
     <script src="/socket.io/socket.io.js"></script>
   </head>
@@ -14,62 +16,111 @@
       let sumVolumeLevel = 0;
       let numberOfRecords = 0;
       let socket = io.connect('http://localhost:8080');
+      let rooms = ["Open Space", "Salle de Réunion", "Salle de Détente"];
 
-      navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-      .then(function(stream) {
-      audioContext = new AudioContext();
-      analyser = audioContext.createAnalyser();
-      microphone = audioContext.createMediaStreamSource(stream);
-      javascriptNode = audioContext.createScriptProcessor(2048, 1, 1); //audioCtx.createScriptProcessor(bufferSize, numberOfInputChannels, numberOfOutputChannels);
+      $( document ).ready(function() {
+        let selectRoom = document.getElementById("selectRoom");
 
-      analyser.smoothingTimeConstant = 0.8;
-      analyser.fftSize = 1024;
+        $("#addRoom").click(function(){
+          if($("#roomNameToAdd").val() != ""){
+            let selectedRoom = $("#selectRoom option:checked").val();
 
-      microphone.connect(analyser);
-      analyser.connect(javascriptNode);
-      javascriptNode.connect(audioContext.destination);
-      javascriptNode.onaudioprocess = function() {
-          var array = new Uint8Array(analyser.frequencyBinCount);
-          analyser.getByteFrequencyData(array);
-          var values = 0;
+            rooms.push($("#roomNameToAdd").val());
 
-          var length = array.length;
-          for (var i = 0; i < length; i++) {
-            values += (array[i]);
+            selectRoom.innerHTML = "";
+            for(i=0; i<rooms.length; i++){
+              let element = document.createElement("option");
+              element.innerHTML = rooms[i];
+              selectRoom.appendChild(element);
+            }
+
+            $("#selectRoom").val(selectedRoom);
           }
+        });
 
-          var average = values / length;
 
-        let volumeLevel = Math.round(average);
-        console.log(volumeLevel);
-        numberOfRecords += 1;
-        sumVolumeLevel += volumeLevel;
+        for(i=0; i<rooms.length; i++){
+          let element = document.createElement("option");
+          element.innerHTML = rooms[i];
+          selectRoom.appendChild(element);
+        }
 
-        // colorPids(average);
-      }
-      })
-      .catch(function(err) {
-        /* handle the error */
+        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        .then(function(stream) {
+        audioContext = new AudioContext();
+        analyser = audioContext.createAnalyser();
+        microphone = audioContext.createMediaStreamSource(stream);
+        javascriptNode = audioContext.createScriptProcessor(2048, 1, 1); //audioCtx.createScriptProcessor(bufferSize, numberOfInputChannels, numberOfOutputChannels);
+
+        analyser.smoothingTimeConstant = 0.8;
+        analyser.fftSize = 1024;
+
+        microphone.connect(analyser);
+        analyser.connect(javascriptNode);
+        javascriptNode.connect(audioContext.destination);
+        javascriptNode.onaudioprocess = function() {
+            var array = new Uint8Array(analyser.frequencyBinCount);
+            analyser.getByteFrequencyData(array);
+            var values = 0;
+
+            var length = array.length;
+            for (var i = 0; i < length; i++) {
+              values += (array[i]);
+            }
+
+            var average = values / length;
+
+          let volumeLevel = Math.round(average);
+          console.log(volumeLevel);
+          numberOfRecords += 1;
+          sumVolumeLevel += volumeLevel;
+
+          // colorPids(average);
+        }
+        })
+        .catch(function(err) {
+          /* handle the error */
+        });
+
+        function sendVolumeLevel(){
+          //Pendant l'exécution de cette fonction, la page web continue d'enregistrer le microphone par conséquent on doit mettre à
+          //jour les valeurs.
+          let currentSumVolumeLevel = sumVolumeLevel;
+          let currentNumberOfRecords = numberOfRecords;
+
+          let meanVolumeLevel = Math.round(sumVolumeLevel/numberOfRecords);
+
+          sumVolumeLevel -= currentSumVolumeLevel;
+          numberOfRecords -= currentNumberOfRecords;
+          let selectedRoom = selectRoom.value;
+          socket.emit('volumeLevel', {
+            volumeLevel: meanVolumeLevel,
+            room: selectedRoom
+          });
+
+          document.getElementById("volumeLevel").innerHTML = meanVolumeLevel;
+        }
+
+        setInterval(sendVolumeLevel, 3000);
       });
-
-      function sendVolumeLevel(){
-        //Pendant l'exécution de cette fonction, la page web continue d'enregistrer le microphone par conséquent on doit mettre à
-        //jour les valeurs.
-        let currentSumVolumeLevel = sumVolumeLevel;
-        let currentNumberOfRecords = numberOfRecords;
-
-        let meanVolumeLevel = Math.round(sumVolumeLevel/numberOfRecords);
-
-        sumVolumeLevel -= currentSumVolumeLevel;
-        numberOfRecords -= currentNumberOfRecords;
-        socket.emit('volumeLevel', { volumeLevel: meanVolumeLevel});
-        document.getElementById("volumeLevel").innerHTML = meanVolumeLevel;
-      }
-
-      setInterval(sendVolumeLevel, 3000);
     </script>
 
-    <h1>Enregistrement du microphone de l'ordinateur</h1>
-    <h2>Niveau enregistré: <span id="volumeLevel">0</span></h2>
+    <main id="wrapper" class="offset-sm-2">
+      <h1>Enregistrement du microphone de l'ordinateur</h1>
+      <h2>Niveau enregistré: <span id="volumeLevel">0</span></h2>
+
+      <div class="">
+        <input id="roomNameToAdd" class="form-control col-sm-3 d-inline" type="text" placeholder="Nom de la salle">
+        <button id="addRoom" class="btn btn-primary d-inline" type="button" name="button"><i class="fas fa-plus-circle"></i></button>
+      </div>
+
+      <label for="selectRoom">Choix de la salle</label>
+      <select class="col-sm-3 form-control" id="selectRoom">
+      </select>
+    </main>
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
   </body>
 </html>

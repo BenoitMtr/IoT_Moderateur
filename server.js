@@ -19,5 +19,6 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
   socket.on('volumeLevel', (data) => {
     console.log(data.volumeLevel);
+    console.log(data.room);
   });
 });
