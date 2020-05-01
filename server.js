@@ -23,6 +23,12 @@ app.post( '/getRoomVolumeLevel', (req, res) => {
   res.json(json);
 });
 
+app.post( '/test', (req, res) => {
+  let json = {};
+  json.volumeLevel = 10;
+  res.json(json);
+});
+
 let roomsValuesDictionary = {};
 
 io.on('connection', (socket) => {
