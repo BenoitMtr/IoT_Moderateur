@@ -18,6 +18,10 @@
       let socket = io.connect('http://localhost:8080');
       let rooms = ["Open Space", "Salle de Réunion", "Salle de Détente"];
 
+      socket.on('json', (data) => {
+        alert("json");
+      });
+
       $( document ).ready(function() {
         let selectRoom = document.getElementById("selectRoom");
 
