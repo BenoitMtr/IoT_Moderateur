@@ -8,10 +8,10 @@ let roomsValuesDictionary = {};
 // WARNING: app.listen(80) will NOT work here!
 let port = process.env.PORT;
 if (port == null || port == "") {
-  port = 8080;
+  port = 3000;
 }
 server.listen(port);
-console.log("Le serveur est actif à l'adresse suivante : 'http://localhost:" + port);
+console.log("Le serveur est actif à l'adresse suivante : http://localhost:" + port);
 app.use(express.static('public'))
 
 app.get('/', (req, res) => {

@@ -15,7 +15,8 @@
     <script type="text/javascript">
       let sumVolumeLevel = 0;
       let numberOfRecords = 0;
-      let socket = io.connect('http://localhost:8080');
+      //http://localhost:3000/
+      let socket = io.connect("https://shrouded-eyrie-04230.herokuapp.com/");
       let rooms = ["Open Space", "Salle de Réunion", "Salle de Détente"];
 
       socket.on('json', (data) => {
