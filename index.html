@@ -3,110 +3,24 @@
   <head>
     <meta charset="utf-8">
     <title>Niveau Volume Micro</title>
-    <!--<link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">-->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="/style.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css" integrity="sha384-AYmEC3Yw5cVb3ZcuHtOA93w35dYTsvhLPVnYs9eStHfGJvOvKxVfELGroGkvsg+p" crossorigin="anonymous"/>
-    <script src="https://code.jquery.com/jquery-3.5.0.slim.min.js" integrity="sha256-MlusDLJIP1GRgLrOflUQtshyP0TwT/RHXsI1wWGnQhs=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.20/css/jquery.dataTables.css">
+    <!-- JQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.0.min.js" integrity="sha256-xNzN2a4ltkB44Mc/Jz3pT4iU1cmeR0FkXs4pru/JxaQ=" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.js"></script>
+    <!--Socket.io-->
     <script src="/socket.io/socket.io.js"></script>
+    <!-- Bootstrap -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <!-- Custom : A charger ce fichier en dernier -->
+    <script type="text/javascript" src="/index.js"></script>
   </head>
   <body>
-
-    <script type="text/javascript">
-      let sumVolumeLevel = 0;
-      let numberOfRecords = 0;
-      //http://localhost:3000/
-      let socket = io.connect("https://shrouded-eyrie-04230.herokuapp.com/");
-      let rooms = ["Open Space", "Salle de Réunion", "Salle de Détente"];
-
-      $( document ).ready(function() {
-        let selectRoom = document.getElementById("selectRoom");
-
-        $("#addRoom").click(function(){
-          if($("#roomNameToAdd").val() != ""){
-            let selectedRoom = $("#selectRoom option:checked").val();
-
-            rooms.push($("#roomNameToAdd").val());
-
-            selectRoom.innerHTML = "";
-            for(i=0; i<rooms.length; i++){
-              let element = document.createElement("option");
-              element.innerHTML = rooms[i];
-              selectRoom.appendChild(element);
-            }
-
-            $("#selectRoom").val(selectedRoom);
-          }
-        });
-
-
-        for(i=0; i<rooms.length; i++){
-          let element = document.createElement("option");
-          element.innerHTML = rooms[i];
-          selectRoom.appendChild(element);
-        }
-
-        navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-        .then(function(stream) {
-        audioContext = new AudioContext();
-        analyser = audioContext.createAnalyser();
-        microphone = audioContext.createMediaStreamSource(stream);
-        javascriptNode = audioContext.createScriptProcessor(2048, 1, 1); //audioCtx.createScriptProcessor(bufferSize, numberOfInputChannels, numberOfOutputChannels);
-
-        analyser.smoothingTimeConstant = 0.8;
-        analyser.fftSize = 1024;
-
-        microphone.connect(analyser);
-        analyser.connect(javascriptNode);
-        javascriptNode.connect(audioContext.destination);
-        javascriptNode.onaudioprocess = function() {
-            var array = new Uint8Array(analyser.frequencyBinCount);
-            analyser.getByteFrequencyData(array);
-            var values = 0;
-
-            var length = array.length;
-            for (var i = 0; i < length; i++) {
-              values += (array[i]);
-            }
-
-            var average = values / length;
-
-          let volumeLevel = Math.round(average);
-          console.log(volumeLevel);
-          numberOfRecords += 1;
-          sumVolumeLevel += volumeLevel;
-
-          // colorPids(average);
-        }
-        })
-        .catch(function(err) {
-          /* handle the error */
-        });
-
-        function sendVolumeLevel(){
-          //Pendant l'exécution de cette fonction, la page web continue d'enregistrer le microphone par conséquent on doit mettre à
-          //jour les valeurs.
-          let currentSumVolumeLevel = sumVolumeLevel;
-          let currentNumberOfRecords = numberOfRecords;
-
-          let meanVolumeLevel = Math.round(sumVolumeLevel/numberOfRecords);
-
-          sumVolumeLevel -= currentSumVolumeLevel;
-          numberOfRecords -= currentNumberOfRecords;
-          let selectedRoom = selectRoom.value;
-          socket.emit('volumeLevel', {
-            volumeLevel: meanVolumeLevel,
-            room: selectedRoom
-          });
-
-          document.getElementById("volumeLevel").innerHTML = meanVolumeLevel;
-        }
-
-        setInterval(sendVolumeLevel, 3000);
-      });
-    </script>
-
-    <main id="wrapper" class="offset-sm-2">
+    <main id="wrapper" class="offset-sm-1 col-sm-12">
       <h1>Enregistrement du microphone de l'ordinateur</h1>
       <h2>Niveau enregistré: <span id="volumeLevel">0</span></h2>
 
@@ -118,10 +32,25 @@
       <label for="selectRoom">Choix de la salle</label>
       <select class="col-sm-3 form-control" id="selectRoom">
       </select>
-    </main>
 
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+      <h3>Tableau des salles</h3>
+      <div class="col-sm-10">
+        <table id="dataTable" class="display">
+          <thead>
+              <tr>
+                  <th>Nom</th>
+                  <th>Volume Moyen Enregistré</th>
+              </tr>
+          </thead>
+          <tbody>
+              <tr>
+              </tr>
+              <tr>
+              </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </main>
   </body>
 </html>
