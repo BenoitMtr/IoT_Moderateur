@@ -19,10 +19,6 @@
       let socket = io.connect("https://shrouded-eyrie-04230.herokuapp.com/");
       let rooms = ["Open Space", "Salle de Réunion", "Salle de Détente"];
 
-      socket.on('json', (data) => {
-        alert("json");
-      });
-
       $( document ).ready(function() {
         let selectRoom = document.getElementById("selectRoom");
 

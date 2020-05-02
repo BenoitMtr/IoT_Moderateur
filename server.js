@@ -21,7 +21,6 @@ app.get('/', (req, res) => {
 app.use(express.json())
 app.post( '/getRoomVolumeLevel', (req, res) => {
   let json = {};
-  io.emit('json', /* */);
   json.volumeLevel = roomsValuesDictionary[req.body.room]
   res.json(json);
 });

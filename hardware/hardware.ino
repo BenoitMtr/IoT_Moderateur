@@ -29,7 +29,7 @@ void post_test(){
     HTTPClient http;
     
     //Ne fonctionne pas pour les requêtes en localhost 
-    http.begin("https://shrouded-eyrie-04230.herokuapp.com/test"); //Specify destination for HTTP request
+    http.begin("https://shrouded-eyrie-04230.herokuapp.com/getRoomVolumeLevel"); //Specify destination for HTTP request
     http.addHeader("Content-Type", "application/json"); //Specify content-type header
     int httpResponseCode = http.POST("{\"room\": \"" + roomName + "\"}"); //Send the actual POST request
  
