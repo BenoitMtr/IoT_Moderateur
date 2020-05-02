@@ -10,26 +10,59 @@ let dataTable;
 function updateSelect(){
   let selectRoom = document.getElementById("selectRoom");
 
+  let cookieSelectedRoom = getCookie("selectedRoom");
+
   selectRoom.innerHTML = "";
 
   fetch(URL + "rooms")
   .then(response => response.json())
   .then(json => {
+    if(cookieSelectedRoom == ""){
+      setCookie("selectedRoom", json[0]["name"], 30);
+    }
+
     for (var i = 0; i < json.length; i++) {
         let element = document.createElement("option");
         element.innerHTML = json[i]["name"];
+
+        if(cookieSelectedRoom === json[i]["name"]){ //Lecture du cookie pour retrouver la pièce sélectionnée
+          element.setAttribute("selected", "");
+        }
+
         selectRoom.appendChild(element);
     }
   });
 }
 
+function setCookie(cname, cvalue, exdays) {
+  var d = new Date();
+  d.setTime(d.getTime() + (exdays*24*60*60*1000));
+  var expires = "expires="+ d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+
+function getCookie(cname) {
+  var name = cname + "=";
+  var decodedCookie = decodeURIComponent(document.cookie);
+  var ca = decodedCookie.split(';');
+  for(var i = 0; i <ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
 
 $( document ).ready(function() {
   let selectRoom = document.getElementById("selectRoom");
 
   updateSelect();
 
-  //Ajout d'une pièce
+  //Bouton d'ajout d'une pièce
   $("#addRoom").click(function(){
     if($("#roomNameToAdd").val() != ""){
       let selectedRoom = $("#selectRoom option:checked").val();
@@ -44,6 +77,11 @@ $( document ).ready(function() {
       $("#roomNameToAdd").val("");
       $("#selectRoom").val(selectedRoom);
     }
+  });
+
+  //Changement de pièce
+  $("#selectRoom").change(function(){
+    setCookie("selectedRoom", $("#selectRoom").val(), 30);
   });
 
   //Tableau des salles
@@ -99,6 +137,7 @@ $( document ).ready(function() {
     /* handle the error */
   });
 
+  //Envoi du niveau de volume relevé au serveur Node.js
   function sendVolumeLevel(){
     //Pendant l'exécution de cette fonction, la page web continue d'enregistrer le microphone par conséquent on doit mettre à
     //jour les valeurs.
@@ -112,7 +151,8 @@ $( document ).ready(function() {
     let selectedRoom = selectRoom.value;
     socket.emit('volumeLevel', {
       room: selectedRoom,
-      volumeLevel: meanVolumeLevel
+      volumeLevel: meanVolumeLevel,
+      updateTime: Date.now()
     });
 
     document.getElementById("volumeLevel").innerHTML = meanVolumeLevel;
