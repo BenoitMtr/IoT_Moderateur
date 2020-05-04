@@ -20,11 +20,26 @@
     <script type="text/javascript" src="/index.js"></script>
   </head>
   <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="#">Modérateur Lumineux</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="nav navbar-nav flex-row justify-content-md-center justify-content-start flex-nowrap">
+          <li class="nav-item">
+            <a id="disconnect" class="nav-link" href="#">Se déconnecter</span></a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
     <main id="wrapper" class="offset-sm-1 col-sm-12">
       <h1>Enregistrement du microphone de l'ordinateur</h1>
       <h2>Niveau enregistré: <span id="volumeLevel">0</span></h2>
 
-      <div class="">
+      <div id="addRoomWrapper">
         <input id="roomNameToAdd" class="form-control col-sm-3 d-inline" type="text" placeholder="Nom de la salle">
         <button id="addRoom" class="btn btn-primary d-inline" type="button" name="button"><i class="fas fa-plus-circle"></i></button>
       </div>

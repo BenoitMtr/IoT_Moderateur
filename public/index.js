@@ -1,6 +1,6 @@
 let sumVolumeLevel = 0;
 let numberOfRecords = 0;
-//http://localhost:3000/
+//http://localhost:3000/ https://shrouded-eyrie-04230.herokuapp.com/
 const URL = "https://shrouded-eyrie-04230.herokuapp.com/"; //Ne pas oublier le slash à la fin
 let socket = io.connect(URL);
 let rooms = [];
@@ -58,6 +58,22 @@ function getCookie(cname) {
 }
 
 $( document ).ready(function() {
+  //Redirection de l'utilisateur s'il n'est pas connecté
+  if(getCookie("email") === ""){
+    window.location.replace(URL + "login");
+  }
+
+  console.log(getCookie("isAdmin"));
+  if(getCookie("isAdmin") === "false"){
+    $("#addRoomWrapper").hide();
+  }
+
+  $("#disconnect").click(function(){
+    setCookie("email", "", 0);
+    window.location.replace(URL + "login");
+  });
+
+
   let selectRoom = document.getElementById("selectRoom");
 
   updateSelect();
