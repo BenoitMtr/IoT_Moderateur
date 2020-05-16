@@ -1,7 +1,7 @@
 let sumVolumeLevel = 0;
 let numberOfRecords = 0;
 //http://localhost:3000/ https://shrouded-eyrie-04230.herokuapp.com/
-const URL = "http://localhost:3000/"; //Ne pas oublier le slash à la fin
+const URL = "https://shrouded-eyrie-04230.herokuapp.com/"; //Ne pas oublier le slash à la fin
 let socket = io.connect(URL);
 let rooms = [];
 let dataTable;
