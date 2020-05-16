@@ -1,7 +1,7 @@
 let sumVolumeLevel = 0;
 let numberOfRecords = 0;
 //http://localhost:3000/ https://shrouded-eyrie-04230.herokuapp.com/
-const URL = "https://shrouded-eyrie-04230.herokuapp.com/"; //Ne pas oublier le slash à la fin
+const URL = "http://localhost:3000/"; //Ne pas oublier le slash à la fin
 let socket = io.connect(URL);
 let rooms = [];
 let dataTable;
@@ -107,8 +107,18 @@ $( document ).ready(function() {
             "dataSrc": ""
         },
         "columns": [
-            { "data": "name" },
-            { "data": "volumeLevel" }
+            {
+              data: "name"
+            },
+            {
+              data: "volumeLevel"
+            },
+            {
+              data: "connectedUsers",
+              render: function ( data, type, row ) {
+                  return data.length;
+              }
+            }
         ],
         "order": [[ 1, "desc" ]],
         "language": {
@@ -164,11 +174,13 @@ $( document ).ready(function() {
 
     sumVolumeLevel -= currentSumVolumeLevel;
     numberOfRecords -= currentNumberOfRecords;
+    let userEmail = getCookie("email");
     let selectedRoom = selectRoom.value;
     socket.emit('volumeLevel', {
       room: selectedRoom,
       volumeLevel: meanVolumeLevel,
-      updateTime: Date.now()
+      updateTime: Date.now(),
+      user: userEmail
     });
 
     document.getElementById("volumeLevel").innerHTML = meanVolumeLevel;
@@ -177,5 +189,5 @@ $( document ).ready(function() {
   setInterval(sendVolumeLevel, 3000); //Envoi du volume au serveur à intervalle régulier
   setInterval( function () {
       dataTable.ajax.reload();
-  }, 10000 );
+  }, 3000 );
 });

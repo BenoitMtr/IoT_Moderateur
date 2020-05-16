@@ -6,6 +6,8 @@ const io = require('socket.io')(server);
 const { Client } = require('pg');
 require('dotenv').config();
 
+const NO_SOUND_THRESHOLD = 20;
+
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0; //Autorized self signed certificate for SSL communication
 
 //Connexion à la base de données PostgreSQL
@@ -27,15 +29,18 @@ client.connect();
 let roomsValuesDictionary = {
   "Open Space" : {
     "volumeLevel" : -1,
-    "updateTime" : -1
+    "updateTime" : -1,
+    "connectedUsers" : []
   },
   "Salle de Réunion" : {
     "volumeLevel" : -1,
-    "updateTime" : -1
+    "updateTime" : -1,
+    "connectedUsers" : []
   },
   "Salle de Détente" : {
     "volumeLevel" : -1,
-    "updateTime" : -1
+    "updateTime" : -1,
+    "connectedUsers" : []
   }
 };
 
@@ -70,6 +75,7 @@ app.get( '/rooms', (req, res) => {
     let currentRoom = {};
     currentRoom.name = key;
     currentRoom.volumeLevel = roomsValuesDictionary[key].volumeLevel;
+    currentRoom.connectedUsers = roomsValuesDictionary[key].connectedUsers;
     rooms.push(currentRoom);
   }
   res.json(rooms);
@@ -77,9 +83,29 @@ app.get( '/rooms', (req, res) => {
 
 //Gestion des sockets
 io.on('connection', (socket) => {
+  //Lorsqu'on reçoit le volume d'un client
   socket.on('volumeLevel', (data) => {
     roomsValuesDictionary[data.room].volumeLevel = data.volumeLevel;
     roomsValuesDictionary[data.room].updateTime = data.updateTime;
+
+    //Suppression de l'utilisateur s'il se trouve dans une autre pièce
+    for(var key in roomsValuesDictionary) {
+      if(key != data.room){
+        var room = roomsValuesDictionary[key];
+        const index = room.connectedUsers.indexOf(data.user);
+        if (index > -1) {
+          room.connectedUsers.splice(index, 1);
+        }
+        if(room.connectedUsers.length === 0){
+          room.volumeLevel = -1;
+        }
+      }
+    }
+
+    //Ajout de l'utilisateur dans la liste des utilisateurs connectés à cette pièce
+    if(roomsValuesDictionary[data.room].connectedUsers.includes(data.user) === false){
+      roomsValuesDictionary[data.room].connectedUsers.push(data.user);
+    }
     //console.log(data.volumeLevel);
     //console.log(data.room);
   });
@@ -136,8 +162,9 @@ function checkSilentRooms(){
   for(var key in roomsValuesDictionary){
     if(roomsValuesDictionary[key].updateTime != -1){
       let elapsedTime = currentTime - roomsValuesDictionary[key].updateTime;
-      if(Math.floor(elapsedTime/1000) > 20){ //20 secondes sans nouvelle valeur
+      if(Math.floor(elapsedTime/1000) > NO_SOUND_THRESHOLD){ //Nombre de secondes sans nouvelle valeur
         roomsValuesDictionary[key].volumeLevel = -1;
+        roomsValuesDictionary[key].connectedUsers = [];
       }
     }
   }
