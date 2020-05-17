@@ -19,6 +19,15 @@ const client = new Client({
 
 client.connect();
 
+//Objet représentatif d'une salle
+const roomObject = {
+  "highestVolume" : -1,
+  "loudestUser" : "",
+  "volumeLevel" : -1,
+  "updateTime" : -1,
+  "connectedUsers" : {}
+};
+
 /*client.query("SELECT * FROM public.users WHERE email='thierry.tsang@laposte.net' AND password='123456';", (err, res) => {
   if (err) throw err;
   for (let row of res.rows) {
@@ -27,21 +36,9 @@ client.connect();
 });*/
 
 let roomsValuesDictionary = {
-  "Open Space" : {
-    "volumeLevel" : -1,
-    "updateTime" : -1,
-    "connectedUsers" : []
-  },
-  "Salle de Réunion" : {
-    "volumeLevel" : -1,
-    "updateTime" : -1,
-    "connectedUsers" : []
-  },
-  "Salle de Détente" : {
-    "volumeLevel" : -1,
-    "updateTime" : -1,
-    "connectedUsers" : []
-  }
+  "Open Space" : JSON.parse(JSON.stringify(roomObject)), //Deep Copy de roomObject
+  "Salle de Réunion" : JSON.parse(JSON.stringify(roomObject)),
+  "Salle de Détente" : JSON.parse(JSON.stringify(roomObject))
 };
 
 // WARNING: app.listen(80) will NOT work here!
@@ -64,7 +61,7 @@ app.get('/login', (req, res) => {
 app.use(express.json())
 app.post( '/getRoomVolumeLevel', (req, res) => {
   let json = {};
-  json.volumeLevel = roomsValuesDictionary[req.body.room]
+  json.volumeLevel = roomsValuesDictionary[req.body.room].volumeLevel;
   res.json(json);
 });
 
@@ -76,6 +73,7 @@ app.get( '/rooms', (req, res) => {
     currentRoom.name = key;
     currentRoom.volumeLevel = roomsValuesDictionary[key].volumeLevel;
     currentRoom.connectedUsers = roomsValuesDictionary[key].connectedUsers;
+    currentRoom.loudestUser = roomsValuesDictionary[key].loudestUser;
     rooms.push(currentRoom);
   }
   res.json(rooms);
@@ -85,33 +83,50 @@ app.get( '/rooms', (req, res) => {
 io.on('connection', (socket) => {
   //Lorsqu'on reçoit le volume d'un client
   socket.on('volumeLevel', (data) => {
-    roomsValuesDictionary[data.room].volumeLevel = data.volumeLevel;
     roomsValuesDictionary[data.room].updateTime = data.updateTime;
+
+    let currentRoom = roomsValuesDictionary[data.room];
 
     //Suppression de l'utilisateur s'il se trouve dans une autre pièce
     for(var key in roomsValuesDictionary) {
       if(key != data.room){
-        var room = roomsValuesDictionary[key];
-        const index = room.connectedUsers.indexOf(data.user);
-        if (index > -1) {
-          room.connectedUsers.splice(index, 1);
+        let room = roomsValuesDictionary[key];
+        if(room.connectedUsers[data.user] != undefined){
+          delete room.connectedUsers[data.user];
         }
-        if(room.connectedUsers.length === 0){
+        if(Object.keys(room.connectedUsers).length === 0){
           room.volumeLevel = -1;
         }
       }
     }
 
     //Ajout de l'utilisateur dans la liste des utilisateurs connectés à cette pièce
-    if(roomsValuesDictionary[data.room].connectedUsers.includes(data.user) === false){
-      roomsValuesDictionary[data.room].connectedUsers.push(data.user);
+    if(currentRoom.connectedUsers[data.user] != undefined){
+      currentRoom.connectedUsers[data.user].recordedVolume = data.volumeLevel;
     }
-    //console.log(data.volumeLevel);
-    //console.log(data.room);
+    else{
+      currentRoom.connectedUsers[data.user] = {"recordedVolume" : data.volumeLevel};
+    }
+
+    //Calcul du volume moyen de la pièce, du volume et de l'utilisateur le plus fort enregistré
+    let highestVolume = -1;
+    let loudestUser = "";
+    let sumVolume = 0;
+    for(var key in currentRoom.connectedUsers){
+      let userVolume = currentRoom.connectedUsers[key].recordedVolume;
+      if(userVolume > highestVolume){
+        highestVolume = userVolume;
+        loudestUser = key;
+      }
+      sumVolume += userVolume;
+    }
+    currentRoom.highestVolume = highestVolume;
+    currentRoom.loudestUser = loudestUser;
+    currentRoom.volumeLevel = sumVolume / Object.keys(currentRoom.connectedUsers).length;
   });
 
   socket.on('addRoom', (data) => {
-    roomsValuesDictionary[data.room] = -1;
+    roomsValuesDictionary[data.room] = JSON.parse(JSON.stringify(roomObject));
   });
 
   socket.on('login', (data) => {
