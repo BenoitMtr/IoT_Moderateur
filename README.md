@@ -24,3 +24,5 @@ Durant le développement de notre système, nous avons défini que les LED du ba
 - LED Bleue: pin GPIO 14
 
 Le montage final doit ressembler à celui présent dans "montage bandeau led.jpg", en adaptant les pins des LED si besoin.
+
+De plus,  la salle reliée à l'ESP est déterminée via la variable "roomName", pour changer la salle il faut modifier directement la variable dans le code. Cela fait partie de la phase d'installation.
