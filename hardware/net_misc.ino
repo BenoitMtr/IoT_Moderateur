@@ -11,8 +11,8 @@ void print_ip_status(){
 
 void connect_wifi(){
  // Access Point of the infrastructure
- const char* ssid = "OUI JE DIS LA WIFI ! - THIERRY";
- const char *password= "ThierryLeGenie"; 
+ const char* ssid="Galaxy J5D1A4"; //à changer
+const char* password="ztgw0731"; //à changer
  
  Serial.println("\nConnecting Wifi to ");
  Serial.println(ssid);
