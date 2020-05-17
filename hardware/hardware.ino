@@ -4,11 +4,13 @@
 #include "net_misc.h" //Fonctions pour se connecter au WIFI
 
 /* ---- CONSTANTES---- */
+int32_t period = 2000; // Publication period
 const int lumiPIN = A5;
 const int tempPIN = 22;
-const int redPIN = 18;
-const int greenPIN = 23;
-const String roomName = "Open Space";
+const int redPIN = 13;
+const int greenPIN = 12;
+const int bluePIN = 14;
+const String roomName = "Open Space"; //nom à changer selon la salle où on est
 
 String whoami; // Identification de CET ESP au sein de la flotte
 
@@ -20,6 +22,7 @@ void setup() {
   //Initialisation des LEDs
   pinMode(redPIN, OUTPUT);
   pinMode(greenPIN, OUTPUT);
+  pinMode(bluePIN, OUTPUT);
   
   // Serial
   Serial.begin(9600);
@@ -44,6 +47,7 @@ int getRoomVolumeLevel(){
   
   if(httpResponseCode > 0){ //Succès de l'envoi de la requête POST
     response = http.getString(); //Get the response to the request
+    Serial.println(response);
     Serial.println("Success on sending POST : ");
   }
   else{
@@ -56,24 +60,40 @@ int getRoomVolumeLevel(){
   DynamicJsonDocument doc(capacity);
   deserializeJson(doc, response);
   volumeLevel = doc["volumeLevel"];
- 
+  Serial.println("volume: ");
+  Serial.print(volumeLevel);
   http.end(); //Libération des ressources
   return volumeLevel;
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  int32_t period = 3000; // Publication period
+
 
   int volumeLevel = getRoomVolumeLevel();
   Serial.println(volumeLevel);
-  if(volumeLevel > 20){
-    digitalWrite(greenPIN, LOW);
-    digitalWrite(redPIN, HIGH);
-  }
-  else{
+  if(volumeLevel > 30){
     digitalWrite(greenPIN, HIGH);
     digitalWrite(redPIN, LOW);
+    digitalWrite(bluePIN, HIGH);
+  }
+  if(volumeLevel > 20 && volumeLevel <30)
+  {
+    digitalWrite(greenPIN, LOW);
+    digitalWrite(redPIN, LOW);
+    digitalWrite(bluePIN, HIGH);
+  }
+  if(volumeLevel > 10 && volumeLevel <20)
+  {
+    digitalWrite(greenPIN, LOW);
+    digitalWrite(redPIN, HIGH);
+    digitalWrite(bluePIN, HIGH);
+  }
+  if(volumeLevel >= -1 && volumeLevel <10)
+  {
+    digitalWrite(greenPIN, HIGH);
+    digitalWrite(redPIN, HIGH);
+    digitalWrite(bluePIN, LOW);
   }
   
   delay(period); //Période en millisecondes
