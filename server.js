@@ -96,6 +96,8 @@ io.on('connection', (socket) => {
         }
         if(Object.keys(room.connectedUsers).length === 0){
           room.volumeLevel = -1;
+          room.highestVolume = -1;
+          room.loudestUser = "";
         }
       }
     }
