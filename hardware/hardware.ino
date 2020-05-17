@@ -60,8 +60,7 @@ int getRoomVolumeLevel(){
   DynamicJsonDocument doc(capacity);
   deserializeJson(doc, response);
   volumeLevel = doc["volumeLevel"];
-  Serial.println("volume: ");
-  Serial.print(volumeLevel);
+ 
   http.end(); //Libération des ressources
   return volumeLevel;
 }
@@ -72,23 +71,28 @@ void loop() {
 
   int volumeLevel = getRoomVolumeLevel();
   Serial.println(volumeLevel);
+  // HIGH: éteint LOW: allumé
+  //couleur rouge
   if(volumeLevel > 30){
     digitalWrite(greenPIN, HIGH);
     digitalWrite(redPIN, LOW);
     digitalWrite(bluePIN, HIGH);
   }
+  //vert et rouge
   if(volumeLevel > 20 && volumeLevel <30)
   {
     digitalWrite(greenPIN, LOW);
     digitalWrite(redPIN, LOW);
     digitalWrite(bluePIN, HIGH);
   }
+  //vert
   if(volumeLevel > 10 && volumeLevel <20)
   {
     digitalWrite(greenPIN, LOW);
     digitalWrite(redPIN, HIGH);
     digitalWrite(bluePIN, HIGH);
   }
+  //bleu
   if(volumeLevel >= -1 && volumeLevel <10)
   {
     digitalWrite(greenPIN, HIGH);
