@@ -203,5 +203,5 @@ $( document ).ready(function() {
   setInterval(sendVolumeLevel, 3000); //Envoi du volume au serveur à intervalle régulier
   setInterval( function () {
       dataTable.ajax.reload();
-  }, 3000 );
+  }, 2000 );
 });
