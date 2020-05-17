@@ -87,21 +87,6 @@ io.on('connection', (socket) => {
 
     let currentRoom = roomsValuesDictionary[data.room];
 
-    //Suppression de l'utilisateur s'il se trouve dans une autre pièce
-    for(var key in roomsValuesDictionary) {
-      if(key != data.room){
-        let room = roomsValuesDictionary[key];
-        if(room.connectedUsers[data.user] != undefined){
-          delete room.connectedUsers[data.user];
-        }
-        if(Object.keys(room.connectedUsers).length === 0){
-          room.volumeLevel = -1;
-          room.highestVolume = -1;
-          room.loudestUser = "";
-        }
-      }
-    }
-
     //Ajout de l'utilisateur dans la liste des utilisateurs connectés à cette pièce
     if(currentRoom.connectedUsers[data.user] != undefined){
       currentRoom.connectedUsers[data.user].recordedVolume = data.volumeLevel;
@@ -125,6 +110,19 @@ io.on('connection', (socket) => {
     currentRoom.highestVolume = highestVolume;
     currentRoom.loudestUser = loudestUser;
     currentRoom.volumeLevel = sumVolume / Object.keys(currentRoom.connectedUsers).length;
+  });
+
+  socket.on('changeRoom', (data) => {
+    //Suppression de l'utilisateur s'il se trouve dans une autre pièce
+    let room = roomsValuesDictionary[data.room];
+    if(room.connectedUsers[data.user] != undefined){
+      delete room.connectedUsers[data.user];
+    }
+    if(Object.keys(room.connectedUsers).length === 0){
+      room.volumeLevel = -1;
+      room.highestVolume = -1;
+      room.loudestUser = "";
+    }
   });
 
   socket.on('addRoom', (data) => {

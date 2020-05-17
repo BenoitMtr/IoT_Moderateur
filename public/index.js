@@ -5,6 +5,7 @@ const URL = "https://shrouded-eyrie-04230.herokuapp.com/"; //Ne pas oublier le s
 let socket = io.connect(URL);
 let rooms = [];
 let dataTable;
+let currentRoom;
 
 //Ajout des rooms dans le select lors du chargement de la page
 function updateSelect(){
@@ -31,6 +32,8 @@ function updateSelect(){
 
         selectRoom.appendChild(element);
     }
+
+    currentRoom = $("#selectRoom").val();
   });
 }
 
@@ -58,6 +61,7 @@ function getCookie(cname) {
 }
 
 $( document ).ready(function() {
+
   //Redirection de l'utilisateur s'il n'est pas connecté
   if(getCookie("email") === ""){
     window.location.replace(URL + "login");
@@ -97,7 +101,14 @@ $( document ).ready(function() {
 
   //Changement de pièce
   $("#selectRoom").change(function(){
+    let userEmail = getCookie("email");
+    socket.emit('changeRoom', {
+      room: currentRoom,
+      user: userEmail
+    });
+
     setCookie("selectedRoom", $("#selectRoom").val(), 30);
+    currentRoom = selectRoom.value;
   });
 
   //Tableau des salles
@@ -155,7 +166,7 @@ $( document ).ready(function() {
       var average = values / length;
 
     let volumeLevel = Math.round(average);
-    console.log(volumeLevel);
+    //console.log(volumeLevel);
     numberOfRecords += 1;
     sumVolumeLevel += volumeLevel;
 
