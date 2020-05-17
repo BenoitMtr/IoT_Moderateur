@@ -36,7 +36,7 @@ const roomObject = {
 });*/
 
 let roomsValuesDictionary = {
-  "Open Space" : JSON.parse(JSON.stringify(roomObject)), //Deep Copy de roomObject
+  "Open Space" : JSON.parse(JSON.stringify(roomObject)),
   "Salle de Réunion" : JSON.parse(JSON.stringify(roomObject)),
   "Salle de Détente" : JSON.parse(JSON.stringify(roomObject))
 };
@@ -74,6 +74,7 @@ app.get( '/rooms', (req, res) => {
     currentRoom.volumeLevel = roomsValuesDictionary[key].volumeLevel;
     currentRoom.connectedUsers = roomsValuesDictionary[key].connectedUsers;
     currentRoom.loudestUser = roomsValuesDictionary[key].loudestUser;
+    currentRoom.updateTime = roomsValuesDictionary[key].updateTime;
     rooms.push(currentRoom);
   }
   res.json(rooms);
@@ -114,14 +115,11 @@ io.on('connection', (socket) => {
 
   socket.on('changeRoom', (data) => {
     //Suppression de l'utilisateur s'il se trouve dans une autre pièce
-    let room = roomsValuesDictionary[data.room];
-    if(room.connectedUsers[data.user] != undefined){
-      delete room.connectedUsers[data.user];
+    if(roomsValuesDictionary[data.room].connectedUsers[data.user] != undefined){
+      delete roomsValuesDictionary[data.room].connectedUsers[data.user];
     }
-    if(Object.keys(room.connectedUsers).length === 0){
-      room.volumeLevel = -1;
-      room.highestVolume = -1;
-      room.loudestUser = "";
+    if(Object.keys(roomsValuesDictionary[data.room].connectedUsers).length === 0){
+      roomsValuesDictionary[data.room] = JSON.parse(JSON.stringify(roomObject));
     }
   });
 
@@ -178,8 +176,7 @@ function checkSilentRooms(){
     if(roomsValuesDictionary[key].updateTime != -1){
       let elapsedTime = currentTime - roomsValuesDictionary[key].updateTime;
       if(Math.floor(elapsedTime/1000) > NO_SOUND_THRESHOLD){ //Nombre de secondes sans nouvelle valeur
-        roomsValuesDictionary[key].volumeLevel = -1;
-        roomsValuesDictionary[key].connectedUsers = [];
+        roomsValuesDictionary[key] = JSON.parse(JSON.stringify(roomObject));
       }
     }
   }
